@@ -1,0 +1,5 @@
+{
+  "name": "Detector de Señales de Problemas",
+  "description": "Un panel impulsado por IA para que emprendedores descubran problemas de negocio de alto valor analizando señales de Reddit, Hacker News e IndieHackers.",
+  "requestFramePermissions": []
+}
