@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SearchInput from './components/SearchInput';
 import AnalysisProgress from './components/AnalysisProgress';
 import ProblemCard from './components/ProblemCard';
@@ -25,6 +25,25 @@ const App: React.FC = () => {
     logs: []
   });
   const [problems, setProblems] = useState<Problem[]>([]);
+
+  // Manejar retorno de Stripe (success / canceled)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const success = params.get('success');
+    const canceled = params.get('canceled');
+
+    if (success) {
+      // Refrescar perfil para traer is_pro / créditos actualizados
+      refreshProfile();
+      // Limpiar parámetros de la URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
+    if (canceled) {
+      // Solo limpiamos la URL; podrías mostrar un toast si quieres
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, [refreshProfile]);
 
   const openAuth = (view: 'signin' | 'signup') => {
     setAuthModal({ isOpen: true, view });

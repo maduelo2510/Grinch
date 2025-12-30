@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabaseClient';
 
 const UserMenu: React.FC = () => {
   const { user, profile, signOut } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [loadingCheckout, setLoadingCheckout] = useState(false);
+  const [loadingPortal, setLoadingPortal] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close when clicking outside
@@ -79,12 +82,62 @@ const UserMenu: React.FC = () => {
               Configuración
             </button>
             
-            {!profile.is_pro && (
-               <button className="w-full text-left px-5 py-2.5 text-sm text-emerald-400 hover:bg-slate-800 transition-colors font-bold flex items-center">
+            {!profile.is_pro ? (
+               <button
+                 disabled={loadingCheckout}
+                 onClick={async () => {
+                   if (!user) return;
+                   setLoadingCheckout(true);
+                   try {
+                     const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+                       body: { userId: user.id }
+                     });
+                     if (error) throw error;
+                     if (data?.url) {
+                       window.location.href = data.url;
+                     }
+                   } catch (err) {
+                     console.error('Error iniciando checkout:', err);
+                     alert('No se pudo iniciar el checkout con Stripe.');
+                   } finally {
+                     setLoadingCheckout(false);
+                   }
+                 }}
+                 className="w-full text-left px-5 py-2.5 text-sm text-emerald-400 hover:bg-slate-800 transition-colors font-bold flex items-center disabled:opacity-60"
+               >
                  <svg className="w-4 h-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                  </svg>
-                 Mejorar a PRO
+                 {loadingCheckout ? 'Redirigiendo...' : 'Mejorar a PRO'}
+               </button>
+            ) : (
+               <button
+                 disabled={loadingPortal}
+                 onClick={async () => {
+                   if (!user) return;
+                   setLoadingPortal(true);
+                   try {
+                     const { data, error } = await supabase.functions.invoke('create-portal-session', {
+                       body: { userId: user.id }
+                     });
+                     if (error) throw error;
+                     if (data?.url) {
+                       window.location.href = data.url;
+                     }
+                   } catch (err) {
+                     console.error('Error abriendo portal de Stripe:', err);
+                     alert('No se pudo abrir el portal de suscripción.');
+                   } finally {
+                     setLoadingPortal(false);
+                   }
+                 }}
+                 className="w-full text-left px-5 py-2.5 text-sm text-indigo-400 hover:bg-slate-800 transition-colors font-bold flex items-center disabled:opacity-60"
+               >
+                 <svg className="w-4 h-4 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                 </svg>
+                 {loadingPortal ? 'Abriendo portal...' : 'Gestionar Suscripción'}
                </button>
             )}
             
